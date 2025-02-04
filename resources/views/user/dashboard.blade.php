@@ -1,4 +1,6 @@
 <x-app-layout>
+    {{-- @dd($recommendedHotels); --}}
+
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             @if (session('success'))
@@ -141,53 +143,25 @@
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mt-6">
                 <div class="p-6">
-                    <h2 class="text-2xl font-semibold mb-6">Suggested Hotels</h2>
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-semibold">Suggested Hotels</h2>
+                        @if($recommendedHotels->isNotEmpty())
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                                Based on your booking history
+                            </span>
+                        @endif
+                    </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         @forelse ($recommendedHotels as $hotel)
                             <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
                                 <div class="relative h-48">
-                                    @if ($hotel->image_url)
-                                        <img src="{{ $hotel->image_url }}" alt="{{ $hotel->name }}"
-                                            class="w-full h-full object-cover">
-                                    @else
-                                        <div class="w-full h-full bg-gray-200 flex items-center justify-center">
-                                            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                            </svg>
-                                        </div>
-                                    @endif
+                                    <img src="{{ asset('storage/' . $hotel->image) }}" alt="{{ $hotel->name }}" class="w-full h-full object-cover">
                                 </div>
 
                                 <div class="p-4">
                                     <h3 class="text-lg font-semibold text-gray-800">{{ $hotel->name }}</h3>
-
-                                    <div class="flex items-center mt-2">
-                                        <div class="flex items-center">
-                                            @for ($i = 1; $i <= 5; $i++)
-                                                @if ($i <= round($hotel->reviews_avg_rating ?? 0))
-                                                    <svg class="w-4 h-4 text-yellow-400 fill-current"
-                                                        viewBox="0 0 20 20">
-                                                        <path
-                                                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                    </svg>
-                                                @else
-                                                    <svg class="w-4 h-4 text-gray-300 fill-current" viewBox="0 0 20 20">
-                                                        <path
-                                                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                    </svg>
-                                                @endif
-                                            @endfor
-                                            <span class="ml-2 text-sm text-gray-600">
-                                                {{ number_format($hotel->reviews_avg_rating ?? 0, 1) }}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <p class="mt-2 text-sm text-gray-600">{{ Str::limit($hotel->description, 100) }}
-                                    </p>
+                                    <p class="mt-2 text-sm text-gray-600">{{ Str::limit($hotel->description, 100) }}</p>
 
                                     <div class="mt-4">
                                         <a href="{{ route('user.booking.create', $hotel) }}"
@@ -199,14 +173,16 @@
                             </div>
                         @empty
                             <div class="col-span-3 text-center py-4 text-gray-500">
-                                No recommendations available yet. Start booking and rating hotels to get personalized
-                                suggestions!
+                                @if ($bookings->count() < 5)
+                                    Book more hotels to receive personalized recommendations!
+                                @else
+                                    No recommendations available at the moment.
+                                @endif
                             </div>
                         @endforelse
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </x-app-layout>

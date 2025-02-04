@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Category;
 
 class Hotel extends Model
 {
@@ -11,6 +12,9 @@ class Hotel extends Model
 
     protected $fillable = [
         'name',
+        'category_id',
+        'city',
+        'state',
         'email',
         'phone',
         'total_rooms',
@@ -21,6 +25,12 @@ class Hotel extends Model
         'rating',
         'price_per_night'
     ];
+
+    // Add this method to define the relationship with Category
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
 
     protected $casts = [
         'amenities' => 'array',

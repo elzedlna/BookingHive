@@ -56,10 +56,32 @@
 
                         <!-- Location Section -->
                         <div class="border-b pb-6">
-                            <h2 class="text-xl font-semibold text-gray-800 mb-6">
-                                Location & Description
-                            </h2>
+                            <h2 class="text-xl font-semibold text-gray-800 mb-6">Location & Description</h2>
                             <div class="space-y-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Hotel Category</label>
+                                    <select name="category_id" required class="w-full px-4 py-2 rounded-lg border border-gray-300">
+                                        <option value="">Select a Category</option> <!-- Default option -->
+                                        @foreach(App\Models\Category::all() as $category)
+                                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">State</label>
+                                    <input type="text" name="state" value="{{ old('state') }}" required
+                                        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        placeholder="E.g., Selangor, Johor">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
+                                    <input type="text" name="city" value="{{ old('city') }}" required
+                                        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        placeholder="E.g., Kuala Lumpur, Penang">
+                                </div>
+
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
                                     <input type="text" name="address" value="{{ old('address') }}" required

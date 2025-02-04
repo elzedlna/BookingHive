@@ -22,53 +22,54 @@ class HotelController extends Controller
         return view('hotel.dashboard', compact('hotels'));
     }
 
-    public function store(Request $request)
+   public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
-            'total_rooms' => 'required|integer|min:1',
-            'address' => 'required|string|max:255',
-            'description' => 'required|string',
-            'amenities' => 'nullable|array',
-            'amenities.*' => 'string|in:wifi,pool,spa,gym,restaurant,parking,bar,room_service,conference_room,laundry',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-            'price_per_night' => 'required|numeric|min:0',
-            'room_types' => 'required|array|min:1',
-            'room_types.*.name' => 'required|string|max:255',
-            'room_types.*.description' => 'required|string',
-            'room_types.*.capacity' => 'required|integer|min:1',
-            'room_types.*.price_per_night' => 'required|numeric|min:0',
-            'room_types.*.total_rooms' => 'required|integer|min:1',
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255',
+        'phone' => 'required|string|max:20',
+        'total_rooms' => 'required|integer|min:1',
+        'address' => 'required|string|max:255',
+        'description' => 'required|string',
+        'amenities' => 'nullable|array',
+        'amenities.*' => 'string|in:wifi,pool,spa,gym,restaurant,parking,bar,room_service,conference_room,laundry',
+        'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+        'price_per_night' => 'required|numeric|min:0',
+        'room_types' => 'required|array|min:1',
+        'room_types.*.name' => 'required|string|max:255',
+        'room_types.*.description' => 'required|string',
+        'room_types.*.capacity' => 'required|integer|min:1',
+        'room_types.*.price_per_night' => 'required|numeric|min:0',
+        'room_types.*.total_rooms' => 'required|integer|min:1',
+        'category_id' => 'required|exists:categories,id', // Ensure category exists
+        'state' => 'required|string|max:255',
+        'city' => 'required|string|max:255',
         ]);
 
-        // Add user_id to the validated data
         $validated['user_id'] = Auth::id();
         $validated['rating'] = 0.0;
 
-        // Create the hotel
+        $validated['category_id'] = $request->category_id; // Assign category_id before storing
         $hotel = Hotel::create($validated);
 
-        // Create room types
-        foreach ($request->room_types as $roomType) {
-            $hotel->roomTypes()->create($roomType);
-        }
+     foreach ($request->room_types as $roomType) {
+        $hotel->roomTypes()->create($roomType);
+     }
 
-        // Handle image uploads
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-                $path = $image->store('hotel-images', 'public');
-                $hotel->images()->create([
-                    'image_path' => $path
-                ]);
-            }
+     if ($request->hasFile('images')) {
+        foreach ($request->file('images') as $image) {
+            $path = $image->store('hotel-images', 'public');
+            $hotel->images()->create([
+                'image_path' => $path
+            ]);
+         }
         }
 
         return redirect()
-            ->route('hotel.dashboard')
-            ->with('success', 'Hotel registered successfully!');
+        ->route('hotel.dashboard')
+        ->with('success', 'Hotel registered successfully!');
     }
+
 
     public function create()
     {
@@ -87,56 +88,56 @@ class HotelController extends Controller
 
     public function update(Request $request, Hotel $hotel)
     {
-        // Ensure user can only update their own hotels
         if ($hotel->user_id !== Auth::id()) {
-            abort(403);
+           abort(403);
         }
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
-            'total_rooms' => 'required|integer|min:1',
-            'address' => 'required|string|max:255',
-            'description' => 'required|string',
-            'amenities' => 'nullable|array',
-            'amenities.*' => 'string|in:wifi,pool,spa,gym,restaurant,parking,bar,room_service,conference_room,laundry',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'price_per_night' => 'required|numeric|min:0',
-            'room_types' => 'required|array|min:1',
-            'room_types.*.id' => 'nullable|exists:room_types,id',
-            'room_types.*.name' => 'required|string|max:255',
-            'room_types.*.description' => 'required|string',
-            'room_types.*.capacity' => 'required|integer|min:1',
-            'room_types.*.price_per_night' => 'required|numeric|min:0',
-            'room_types.*.total_rooms' => 'required|integer|min:1',
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255',
+        'phone' => 'required|string|max:20',
+        'total_rooms' => 'required|integer|min:1',
+        'address' => 'required|string|max:255',
+        'description' => 'required|string',
+        'amenities' => 'nullable|array',
+        'amenities.*' => 'string|in:wifi,pool,spa,gym,restaurant,parking,bar,room_service,conference_room,laundry',
+        'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'price_per_night' => 'required|numeric|min:0',
+        'room_types' => 'required|array|min:1',
+        'room_types.*.id' => 'nullable|exists:room_types,id',
+        'room_types.*.name' => 'required|string|max:255',
+        'room_types.*.description' => 'required|string',
+        'room_types.*.capacity' => 'required|integer|min:1',
+        'room_types.*.price_per_night' => 'required|numeric|min:0',
+        'room_types.*.total_rooms' => 'required|integer|min:1',
+        'category_id' => 'required|exists:categories,id', // Ensure category exists
+        'state' => 'required|string|max:255',
+        'city' => 'required|string|max:255',
         ]);
 
-        // Update the hotel
-        $hotel->update($validated);
+         $validated['category_id'] = $request->category_id; // Assign category_id before updating
+         $hotel->update($validated);
 
-        // Update room types
         foreach ($request->room_types as $roomTypeData) {
-            if (isset($roomTypeData['id'])) {
-                $hotel->roomTypes()->where('id', $roomTypeData['id'])->update($roomTypeData);
-            } else {
-                $hotel->roomTypes()->create($roomTypeData);
-            }
+         if (isset($roomTypeData['id'])) {
+            $hotel->roomTypes()->where('id', $roomTypeData['id'])->update($roomTypeData);
+        }   else {
+            $hotel->roomTypes()->create($roomTypeData);
+        }
         }
 
-        // Handle new image uploads
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-                $path = $image->store('hotel-images', 'public');
-                $hotel->images()->create([
-                    'image_path' => $path
-                ]);
-            }
+         if ($request->hasFile('images')) {
+         foreach ($request->file('images') as $image) {
+            $path = $image->store('hotel-images', 'public');
+            $hotel->images()->create([
+                'image_path' => $path
+            ]);
+         }
         }
 
-        return redirect()
-            ->route('hotel.dashboard')
-            ->with('success', 'Hotel updated successfully!');
+         return redirect()
+        ->route('hotel.dashboard')
+        ->with('success', 'Hotel updated successfully!');
     }
 
     public function destroy(Hotel $hotel)

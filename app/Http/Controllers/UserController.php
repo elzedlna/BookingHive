@@ -15,14 +15,21 @@ use App\Http\Controllers\RecommendationController;
 
 class UserController extends Controller
 {
+    protected $recommendationController;
+
+    public function __construct(RecommendationController $recommendationController)
+    {
+        $this->recommendationController = $recommendationController;
+    }
+
     public function dashboard()
     {
         $user = auth()->user();
         $bookings = $user->bookings()->with('hotel')->latest()->get();
-        
+
         // Get recommended hotels
         $recommendationController = new RecommendationController();
-        $recommendedHotels = $recommendationController->getRecommendedHotelsForDashboard($user->id);
+        $recommendedHotels = $recommendationController->getRecommendedHotelsForUser($user->id);
 
         return view('user.dashboard', [
             'bookings' => $bookings,

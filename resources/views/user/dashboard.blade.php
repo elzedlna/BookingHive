@@ -144,8 +144,14 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mt-6">
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-semibold">Suggested Hotels</h2>
-                        @if($recommendedHotels->isNotEmpty())
+                        <h2 class="text-2xl font-semibold">
+                            @if ($bookings->count() < 5)
+                                Popular Hotels
+                            @else
+                                Suggested Hotels
+                            @endif
+                        </h2>
+                        @if ($recommendedHotels->isNotEmpty())
                             <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                                 Based on your booking history
                             </span>
@@ -156,12 +162,25 @@
                         @forelse ($recommendedHotels as $hotel)
                             <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
                                 <div class="relative h-48">
-                                    <img src="{{ asset('storage/' . $hotel->image) }}" alt="{{ $hotel->name }}" class="w-full h-full object-cover">
+                                    @if ($hotel->images->isNotEmpty())
+                                        <img src="{{ asset('storage/' . $hotel->images->first()->image_path) }}"
+                                            alt="{{ $hotel->name }}" class="w-full h-full object-cover">
+                                    @else
+                                        <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                                            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                            </svg>
+                                        </div>
+                                    @endif
+
                                 </div>
 
                                 <div class="p-4">
                                     <h3 class="text-lg font-semibold text-gray-800">{{ $hotel->name }}</h3>
-                                    <p class="mt-2 text-sm text-gray-600">{{ Str::limit($hotel->description, 100) }}</p>
+                                    <p class="mt-2 text-sm text-gray-600">{{ Str::limit($hotel->description, 100) }}
+                                    </p>
 
                                     <div class="mt-4">
                                         <a href="{{ route('user.booking.create', $hotel) }}"

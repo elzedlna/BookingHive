@@ -5,64 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Hotel;
 use App\Models\Booking;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RecommendationController extends Controller
 {
-    private const MIN_BOOKINGS_FOR_RECOMMENDATIONS = 5;
     private const NUM_RECOMMENDATIONS = 3;
 
     public function index()
     {
-       
-        $hotels = $this->getRecommendedHotelsForDashboard($user->id);
-
-        $message = null;
-        if ($hotels->isEmpty()) {
-            $message = "No personalized recommendations yet. Start booking to get tailored suggestions!";
-            $hotels = $this->getPopularHotels(self::NUM_RECOMMENDATIONS);
-        }
-
-        return view('user.recommend', compact('hotels', 'message'));
-    }
-
-    public function getRecommendedHotelsForDashboard($userId)
-    {
         $user = auth()->user();
-         if (!$user) {
-            return response()->json(["error" => "User not authenticated"], 401);
-        }
-
-        $numBookings = Booking::where('user_id', $userId)->count();
-        if ($numBookings < self::MIN_BOOKINGS_FOR_RECOMMENDATIONS) {
-            return $this->getPopularHotels(self::NUM_RECOMMENDATIONS);
-        }
-
-
-
-        $numBookings = Booking::where('user_id', $userId)->count();
-        if ($numBookings < self::MIN_BOOKINGS_FOR_RECOMMENDATIONS) {
-            return $this->getPopularHotels(self::NUM_RECOMMENDATIONS);
-        }
-
-        $userBookings = Booking::where('user_id', $userId)->with('hotel')->get();
-        //dd($userBookings); // Debugging: Check if bookings are retrieved
-        
-        // Debugging - Check if the count is correct
-        //dd($numBookings); 
-
-        // If user has less than 5 bookings, return popular hotels
-        if ($numBookings < self::MIN_BOOKINGS_FOR_RECOMMENDATIONS) {
-            return $this->getPopularHotels(self::NUM_RECOMMENDATIONS);
-        }
-
-        // Extract user preferences (category, state, city)
-        $preferences = $this->extractUserPreferences($userBookings);
-
-        // Debugging - Check extracted preferences
-        //dd($preferences);
-
-        // Get recommendations using collaborative filtering
-        return $this->getCollaborativeRecommendations($userId, $preferences);
+        $hotels = $this->getRecommendedHotelsForDashboard($user->id);
+        return view('user.recommend', compact('hotels'));
     }
 
     public function getRecommendedHotelsForUser($userId, $limit = 3)
@@ -70,76 +23,80 @@ class RecommendationController extends Controller
         return $this->getRecommendedHotelsForDashboard($userId, $limit);
     }
 
-
-    private function extractUserPreferences($userBookings)
+    public function getRecommendedHotelsForDashboard($userId, $limit = 3)
     {
-        $preferences = [
-            'category' => $userBookings->pluck('hotel.category_id')->unique()->toArray(),
-            'state' => $userBookings->pluck('hotel.state')->unique()->toArray(),
-            'city' => $userBookings->pluck('hotel.city')->unique()->toArray(),
-        ];
+        try {
+            // Get user's booking history with hotel information
+            $userBookings = Booking::with('hotel')
 
-        //dd($preferences); // Debugging: Check extracted preferences
-        return $preferences;
+                ->where('user_id', $userId)
+                ->get();
+
+            // If user has any bookings, get recommendations based on their most booked category
+            if ($userBookings->isNotEmpty()) {
+                // Get the most frequently booked category
+                $categoryPreference = $this->getMostBookedCategory($userBookings);
+
+                if ($categoryPreference) {
+                    Log::info("User's most booked category: " . $categoryPreference);
+
+                    // Get recommendations from the same category
+                    $recommendations = $this->getHotelsFromCategory($categoryPreference, $limit);
+
+                    if ($recommendations->isNotEmpty()) {
+                        return $recommendations;
+                    }
+                }
+            }
+
+            // Fallback to popular hotels if no bookings or no recommendations found
+            return $this->getPopularHotels($limit);
+        } catch (\Exception $e) {
+            Log::error("Error in recommendations: " . $e->getMessage());
+            return $this->getPopularHotels($limit);
+        }
     }
 
-    private function getCollaborativeRecommendations($userId, $preferences)
+    private function getMostBookedCategory($userBookings)
     {
-        // Find similar users based on common bookings
-        $similarUsers = $this->findSimilarUsers($userId);
-        if ($similarUsers->isEmpty()) {
-            return collect();
+        $categoryCount = [];
+
+        foreach ($userBookings as $booking) {
+            if ($booking->hotel) {
+                $categoryId = $booking->hotel->category_id;
+                $categoryCount[$categoryId] = ($categoryCount[$categoryId] ?? 0) + 1;
+            }
         }
 
-        // Debugging - Check similar users found
-        //dd($similarUsers);
-
-        if ($similarUsers->isEmpty()) {
-            return collect();
+        // Return the category with the most bookings
+        if (!empty($categoryCount)) {
+            arsort($categoryCount);
+            return key($categoryCount);
         }
 
-        $hotels = Hotel::whereIn('category_id', $preferences['category'])
-            ->whereIn('state', $preferences['state'])
-            ->whereIn('city', $preferences['city'])
-            ->whereHas('bookings', function ($query) use ($similarUsers) {
-                $query->whereIn('user_id', $similarUsers);
-            })
-            ->whereDoesntHave('bookings', function ($query) use ($userId) {
-                $query->where('user_id', $userId);
-            })
+        return null;
+    }
+
+    private function getHotelsFromCategory($categoryId, $limit)
+    {
+        return Hotel::where('category_id', $categoryId)
+            ->withCount('reviews')
             ->withAvg('reviews', 'rating')
+            ->with(['images', 'reviews'])
             ->orderByDesc('reviews_avg_rating')
-            ->limit(self::NUM_RECOMMENDATIONS)
+            ->orderByDesc('reviews_count')
+            ->limit($limit)
             ->get();
-
-        // Debugging - Check recommended hotels
-        //dd($hotels);
-
-        return $hotels;
-    }
-
-    private function findSimilarUsers($userId)
-    {
-        $similarUsers = DB::table('bookings as b1')
-            ->join('bookings as b2', 'b1.hotel_id', '=', 'b2.hotel_id')
-            ->where('b1.user_id', $userId)
-            ->where('b2.user_id', '!=', $userId)
-            ->groupBy('b2.user_id')
-            ->select('b2.user_id', DB::raw('COUNT(*) as common_bookings'))
-            ->orderByDesc('common_bookings')
-            ->limit(5)
-            ->pluck('b2.user_id');
-
-        //dd ($similarUsers);
-        return $similarUsers;
     }
 
     private function getPopularHotels($limit)
     {
-        return Hotel::withAvg('reviews', 'rating')
-            ->having('reviews_avg_rating', '>=', 4)
+        return Hotel::withCount('reviews')
+            ->with(['images', 'reviews'])  // ✅ Fetch images along with reviews
+            ->withAvg('reviews', 'rating')
             ->orderByDesc('reviews_avg_rating')
-            ->take($limit)
+            ->orderByDesc('reviews_count')
+            ->limit($limit)
             ->get();
     }
 }

@@ -31,12 +31,16 @@ Route::middleware('auth')->group(function () {
 
     // User management
     Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users');
+    Route::get('/admin/users/create', [AdminController::class, 'createUser'])->name('admin.users.create');
+    Route::post('/admin/users', [AdminController::class, 'storeUser'])->name('admin.users.store');
     Route::get('/admin/users/{user}/edit', [AdminController::class, 'editUser'])->name('admin.users.edit');
     Route::put('/admin/users/{user}', [AdminController::class, 'updateUser'])->name('admin.users.update');
-    
+
 
     // Hotel management
     Route::get('/admin/hotels', [AdminController::class, 'hotels'])->name('admin.hotels');
+    Route::get('/admin/hotels/create', [AdminController::class, 'createHotel'])->name('admin.hotels.create');
+    Route::post('/admin/hotels', [AdminController::class, 'storeHotel'])->name('admin.hotels.store');
     Route::get('/admin/hotels/{hotel}/edit', [AdminController::class, 'editHotel'])->name('admin.hotels.edit');
     Route::put('/admin/hotels/{hotel}', [AdminController::class, 'updateHotel'])->name('admin.hotels.update');
 
@@ -85,6 +89,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/send-seasonal-email', [AdminController::class, 'sendSeasonalEmail'])
         ->middleware('role:admin')
         ->name('admin.send-seasonal-email');
+
+    // Test email route
+    Route::get('/test-email', function () {
+    $details = "Test Email from Laravel 8! END NAMA";
+
+    Mail::to(['edlinaeliz122@gmail.com'])->send(new TestEmail($details));
+    });
 });
 
 require __DIR__ . '/auth.php';

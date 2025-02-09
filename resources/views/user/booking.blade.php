@@ -76,7 +76,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         @forelse ($hotels as $hotel)
-                            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                            <div class="bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full">
                                 <!-- Hotel Image -->
                                 <div class="h-48 overflow-hidden relative">
                                     @if ($hotel->images->isNotEmpty())
@@ -90,7 +90,7 @@
                                 </div>
 
                                 <!-- Hotel Info -->
-                                <div class="p-4">
+                                <div class="p-4 flex flex-col flex-grow">
                                     <!-- Location -->
                                     <div class="text-xs text-gray-500 mb-1">{{ $hotel->address }}</div>
 
@@ -136,15 +136,19 @@
                                         </div>
                                     </div>
 
+                                    <div class="flex-grow"></div>
+
                                     <!-- Book Now Button -->
-                                    <a href="{{ route('user.hotel.show', $hotel) }}"
-                                        class="block border w-full text-center bg-white px-4 py-2 rounded-lg hover:bg-gray-100 transition duration-150 mb-2">
-                                        View Hotel
-                                    </a>
-                                    <a href="{{ route('user.booking.create', $hotel) }}"
-                                        class="block w-full text-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-150">
-                                        Book Now
-                                    </a>
+                                    <div class="mt-auto">
+                                        <a href="{{ route('user.hotel.show', $hotel) }}"
+                                            class="block border w-full text-center bg-white px-4 py-2 rounded-lg hover:bg-gray-100 transition duration-150 mb-2">
+                                            View Hotel
+                                        </a>
+                                        <a href="{{ route('user.booking.create', $hotel) }}"
+                                            class="block w-full text-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-150">
+                                            Book Now
+                                        </a>
+                                   </div>
                                 </div>
                             </div>
                         @empty

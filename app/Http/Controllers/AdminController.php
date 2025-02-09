@@ -16,7 +16,7 @@ class AdminController extends Controller
         $totalUsers = User::count();
         $totalHotels = Hotel::count();
         $totalReviews = Review::count();
-        
+
         return view('admin.dashboard', compact('totalUsers', 'totalHotels', 'totalReviews'));
     }
 
@@ -29,7 +29,7 @@ class AdminController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -42,6 +42,35 @@ class AdminController extends Controller
         $users = $query->latest()->paginate(10);
 
         return view('admin.users.index', compact('users'));
+    }
+
+    public function createUser()
+    {
+        // Set the default role to 'user'
+        $defaultRole = 'user';
+        return view('admin.users.create', compact('defaultRole'));
+    }
+
+    public function storeUser(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'sometimes|in:admin,hotel,user'
+        ]);
+
+        // Set default role to 'user' if not provided
+        $validated['role'] = $validated['role'] ?? 'user';
+
+        // Hash the password
+        $validated['password'] = bcrypt($validated['password']);
+
+        // Create the user
+        User::create($validated);
+
+        return redirect()->route('admin.users')
+            ->with('success', 'User created successfully');
     }
 
     public function editUser(User $user)
@@ -69,17 +98,45 @@ class AdminController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('address', 'like', "%{$search}%")
-                  ->orWhereHas('user', function($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhere('address', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
         $hotels = $query->latest()->paginate(10);
         return view('admin.hotels.index', compact('hotels'));
+    }
+
+    public function createHotel()
+    {
+        $defaultRole = 'hotel';
+        return view('admin.hotels.create', compact('defaultRole'));
+    }
+
+    public function storeHotel(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'sometimes|in:admin,hotel,user'
+        ]);
+
+        // Set default role to 'hotel' if not provided
+        $validated['role'] = $validated['role'] ?? 'hotel';
+
+        // Hash the password
+        $validated['password'] = bcrypt($validated['password']);
+
+        // Create the user
+        User::create($validated);
+
+        return redirect()->route('admin.users')
+            ->with('success', 'Hotel created successfully');
     }
 
     public function editHotel(Hotel $hotel)
@@ -105,23 +162,23 @@ class AdminController extends Controller
             ->with('success', 'Hotel updated successfully');
     }
 
-   public function sendSeasonalEmail()
+    public function sendSeasonalEmail()
     {
         try {
             // Fetch only users with the role of 'user'
-           $users = User::where('role', 'user')->get();
-        
-         foreach ($users as $user) {
-             // Queue email with a delay to avoid rate-limiting issues
-               Mail::to($user->email)
-                  ->later(now()->addSeconds($users->search($user) * 5), new SeasonalEmail($user));
-         }
-        
-          return redirect()->back()
-             ->with('success', 'Seasonal emails queued for ' . $users->count() . ' users');
-     }   catch (\Exception $e) {
-         return redirect()->back()
-             ->with('error', 'Failed to queue emails: ' . $e->getMessage());
+            $users = User::where('role', 'user')->get();
+
+            foreach ($users as $user) {
+                // Queue email with a delay to avoid rate-limiting issues
+                Mail::to($user->email)
+                    ->later(now()->addSeconds($users->search($user) * 5), new SeasonalEmail($user));
+            }
+
+            return redirect()->back()
+                ->with('success', 'Seasonal emails queued for ' . $users->count() . ' users');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Failed to queue emails: ' . $e->getMessage());
         }
     }
 }

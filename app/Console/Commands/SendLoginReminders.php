@@ -20,8 +20,10 @@ class SendLoginReminders extends Command
     public function handle()
     {
         // Find users who haven't logged in for 1 minute (for testing)
-        $inactiveUsers = User::where('last_login_at', '<', now()->subMinute())
-            ->orWhereNull('last_login_at')
+        $inactiveUsers = User::where('role','user')->where(function ($query) {
+            $query->where('last_login_at', '<', now()->subMinute())
+                  ->orWhereNull('last_login_at');
+        })
             ->get();
 
         foreach ($inactiveUsers as $user) {

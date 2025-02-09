@@ -160,7 +160,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         @forelse ($recommendedHotels as $hotel)
-                            <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+                            <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200 flex flex-col h-full">
                                 <div class="relative h-48">
                                     @if ($hotel->images->isNotEmpty())
                                         <img src="{{ asset('storage/' . $hotel->images->first()->image_path) }}"
@@ -177,11 +177,13 @@
 
                                 </div>
 
-                                <div class="p-4">
+                                <div class="p-4 flex flex-col flex-grow">
                                     <h3 class="text-lg font-semibold text-gray-800">{{ $hotel->name }}</h3>
                                     <p class="mt-2 text-sm text-gray-600">{{ Str::limit($hotel->description, 100) }}
                                     </p>
 
+                                    <div class="flex-grow"></div>
+                                    
                                     <div class="mt-4">
                                         <a href="{{ route('user.booking.create', $hotel) }}"
                                             class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:border-blue-800 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">

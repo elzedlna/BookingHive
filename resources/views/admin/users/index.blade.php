@@ -3,8 +3,11 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    <h2 class="text-2xl font-semibold mb-6">Manage Users</h2>
-
+                    <h2 class="text-2xl font-semibold mb-3">Manage Users</h2>
+                    <div class="mb-2">
+                        <a href="{{ route('admin.users.create') }}" class="text-white bg-blue-600 px-4 py-1 text-lg rounded">Add
+                            User</a>
+                    </div>
                     <!-- Search Form -->
                     <div class="mb-6">
                         <form action="{{ route('admin.users') }}" method="GET">
